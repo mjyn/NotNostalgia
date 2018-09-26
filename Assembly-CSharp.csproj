@@ -61,6 +61,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\CurrentNotes.cs" />
+    <Compile Include="Assets\Scripts\DoriruNoteBodyController.cs" />
     <Compile Include="Assets\Scripts\KeysoundFilenameUtilities.cs" />
     <Compile Include="Assets\Scripts\LongNoteBodyController.cs" />
     <Compile Include="Assets\Scripts\Models\AudioSource.cs" />

@@ -22,9 +22,9 @@ GameObject:
   - component: {fileID: 33745721950855894}
   - component: {fileID: 23207164803983036}
   - component: {fileID: 65169355916108648}
-  - component: {fileID: 114965710168305622}
+  - component: {fileID: 114456178702500124}
   m_Layer: 0
-  m_Name: LongNoteBody
+  m_Name: DoriruNoteBody
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -58,7 +58,7 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RenderingLayerMask: 4294967295
   m_Materials:
-  - {fileID: 2100000, guid: 89cfb5fd7a5892445bc6b5ea93227c42, type: 2}
+  - {fileID: 2100000, guid: 384ab3360b87fdf4284304f04d0d0cf6, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -97,7 +97,7 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &114965710168305622
+--- !u!114 &114456178702500124
 MonoBehaviour:
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
@@ -105,7 +105,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1597783859253114}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 15149f01eab882d41a59a45486e8d156, type: 3}
+  m_Script: {fileID: 11500000, guid: 004fcff24d08bae419dfcf29e9d31a55, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   Panel0x: -7.25

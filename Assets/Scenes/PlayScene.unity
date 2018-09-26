@@ -626,6 +626,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NotePrefab: {fileID: 1556727087489644, guid: f8acfff9f49387f4f9b6c876a09bf24e, type: 2}
+  LongNoteBodyPrefab: {fileID: 1597783859253114, guid: dc5c098450ab151408a089827a452ea4,
+    type: 2}
+  DoriruNoteBodyPrefab: {fileID: 1597783859253114, guid: 1bcbaca65a30a0b4b9bba834a810bd67,
+    type: 2}
   AudioSourcePrefab: {fileID: 1076569928703874, guid: a04f551405e74f140bf67dc2b79a61ca,
     type: 2}
   DebugText: {fileID: 1313606237}
@@ -1509,7 +1513,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1304668809
 MonoBehaviour:
   m_ObjectHideFlags: 0

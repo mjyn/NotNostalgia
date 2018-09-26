@@ -12,6 +12,8 @@ using System.IO;
 public class PlaySceneScript : MonoBehaviour
 {
     public GameObject NotePrefab;
+    public GameObject LongNoteBodyPrefab;
+    public GameObject DoriruNoteBodyPrefab;
     public GameObject AudioSourcePrefab;
     public Text DebugText;
     public int MaxSources;
@@ -37,7 +39,7 @@ public class PlaySceneScript : MonoBehaviour
     void LoadMusicScore(string path)
     {
         XmlSerializer serializer = new XmlSerializer(typeof(MusicScore));
-        StreamReader xmlreader = new StreamReader(Path.Combine(path, "m_l0002_connect_02extreme.xml"));
+        StreamReader xmlreader = new StreamReader(Path.Combine(path, "m_t0017_sumidagawa_02extreme.xml"));
 
         var musicscore = serializer.Deserialize(xmlreader) as MusicScore;
 
@@ -159,7 +161,7 @@ public class PlaySceneScript : MonoBehaviour
         _debug_sourcesused = 0;
         _debug_audioSourceMaxOutCount = 0;
         _audioSources = new List<AudioSourceInfo>();
-        _currentNotesManager = new CurrentNotesManager(NotePrefab);
+        _currentNotesManager = new CurrentNotesManager(NotePrefab, LongNoteBodyPrefab, DoriruNoteBodyPrefab);
 
         //begin create audiosources
         GameObject asourcepre = Instantiate(AudioSourcePrefab);

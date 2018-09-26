@@ -13,16 +13,24 @@ namespace NotNostalgia
         public List<Note> CurrentNotes;
         public GameObject NormalNotePrefab;
         public GameObject LongNoteBodyPrefab;
+        public GameObject DoriruNoteBodyPrefab;
 
-        public CurrentNotesManager(GameObject normalNotePrefab)
+        public CurrentNotesManager(GameObject normalNotePrefab, GameObject longNoteBodyPrefab, GameObject doriruNoteBodyPrefab)
         {
             NormalNotePrefab = normalNotePrefab;
+            LongNoteBodyPrefab = longNoteBodyPrefab;
+            DoriruNoteBodyPrefab = doriruNoteBodyPrefab;
             CurrentNotes = new List<Note>();
         }
         public void AddNote(MusicScoreNote musicScoreNote)
         {
-            switch (musicScoreNote.KeyKind)
+            switch (musicScoreNote.NoteType)
             {
+
+                case 4:
+                case 12:
+                    //temp slide
+
                 case 0:
                 case 8:
                     //normal note
@@ -32,7 +40,7 @@ namespace NotNostalgia
                     var note = new Note()
                     {
                         NoteType = NoteTypeEnum.NormalNote,
-                        StartTime = musicScoreNote.StartTimingMsec / 1000,
+                        StartTime = musicScoreNote.StartTimingMsec / 1000f,
                         MinIndex = musicScoreNote.MinKeyIndex,
                         GameObject = gobj,
                         MaxIndex = musicScoreNote.MaxKeyIndex
@@ -49,8 +57,43 @@ namespace NotNostalgia
                     GameObject lnhead = UnityEngine.Object.Instantiate(NormalNotePrefab);
                     lnhead.GetComponent<NoteController>().SetProperties(musicScoreNote.MinKeyIndex, musicScoreNote.MaxKeyIndex);
                     GameObject lnbody = UnityEngine.Object.Instantiate(LongNoteBodyPrefab);
-                    lnhead.GetComponent<LongNoteBodyController>().SetProperties(musicScoreNote.MinKeyIndex, musicScoreNote.MaxKeyIndex, musicScoreNote.GateTimeMsec / 1000f);
-
+                    lnbody.GetComponent<LongNoteBodyController>().SetProperties(musicScoreNote.MinKeyIndex, musicScoreNote.MaxKeyIndex, musicScoreNote.GateTimeMsec / 1000f);
+                    var longnote = new Note()
+                    {
+                        NoteType = NoteTypeEnum.LongNote,
+                        StartTime = musicScoreNote.StartTimingMsec / 1000f,
+                        MinIndex = musicScoreNote.MinKeyIndex,
+                        MaxIndex = musicScoreNote.MaxKeyIndex,
+                        GameObject = lnhead,
+                        LnBodyGameObject = lnbody
+                    };
+                    foreach (var subnote in musicScoreNote.SubNoteData)
+                    {
+                        longnote.SubNotes.Add(subnote);
+                    }
+                    CurrentNotes.Add(longnote);
+                    break;
+                case 64:
+                case 72:
+                    //doriru note
+                    GameObject drrhead = UnityEngine.Object.Instantiate(NormalNotePrefab);
+                    drrhead.GetComponent<NoteController>().SetProperties(musicScoreNote.MinKeyIndex, musicScoreNote.MaxKeyIndex);
+                    GameObject drrbody = UnityEngine.Object.Instantiate(DoriruNoteBodyPrefab);
+                    drrbody.GetComponent<DoriruNoteBodyController>().SetProperties(musicScoreNote.MinKeyIndex, musicScoreNote.MaxKeyIndex, musicScoreNote.GateTimeMsec / 1000f);
+                    var dorirunote = new Note()
+                    {
+                        NoteType = NoteTypeEnum.LongNote,
+                        StartTime = musicScoreNote.StartTimingMsec / 1000f,
+                        MinIndex = musicScoreNote.MinKeyIndex,
+                        MaxIndex = musicScoreNote.MaxKeyIndex,
+                        GameObject = drrhead,
+                        LnBodyGameObject = drrbody
+                    };
+                    foreach (var subnote in musicScoreNote.SubNoteData)
+                    {
+                        dorirunote.SubNotes.Add(subnote);
+                    }
+                    CurrentNotes.Add(dorirunote);
                     break;
             }
         }
@@ -67,6 +110,7 @@ namespace NotNostalgia
         }
         public NoteTypeEnum NoteType { get; set; }
         public GameObject GameObject { get; set; }
+        //is lnbody or slideconnector
         public GameObject LnBodyGameObject { get; set; }
         public float StartTime { get; set; }
         public float EndTime { get; set; }
@@ -108,8 +152,7 @@ namespace NotNostalgia
     public enum NoteTypeEnum
     {
         NormalNote,
-        LongNoteHead,
-        LongNoteBody,
+        LongNote,
         DoriruNote,
         SlideNote
     }
