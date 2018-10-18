@@ -16,21 +16,46 @@ namespace NotNostalgia
         public GameObject DoriruNoteBodyPrefab;
         public GameObject SlideNotePrefab;
 
+        private Dictionary<int, LaneStatus> _laneStatus;
+        private PlaySceneScript _pss;
+        private float _missTiming, _goodTiming, _justTiming, _pJustTiming;
 
-        private float _badTiming, _goodTiming, _greatTiming, _pGreatTiming;
-
-        public CurrentNotesManager(GameObject normalNotePrefab, GameObject longNoteBodyPrefab, GameObject doriruNoteBodyPrefab, GameObject slideNotePrefab)
+        private HanteiEnum getHantei(float time1, float time2)
         {
+            float abs = Math.Abs(time1 - time2);
+            if (abs <= _pJustTiming)
+                return HanteiEnum.PJust;
+            else if (abs <= _justTiming)
+                return HanteiEnum.Just;
+            else if (abs <= _goodTiming)
+                return HanteiEnum.Good;
+            else if (abs <= _missTiming)
+                return HanteiEnum.Miss;
+            else
+                return HanteiEnum.InActive;
+        }
+        public CurrentNotesManager(PlaySceneScript pss, GameObject normalNotePrefab, GameObject longNoteBodyPrefab, GameObject doriruNoteBodyPrefab, GameObject slideNotePrefab)
+        {
+            _pss = pss;
             NormalNotePrefab = normalNotePrefab;
             LongNoteBodyPrefab = longNoteBodyPrefab;
             DoriruNoteBodyPrefab = doriruNoteBodyPrefab;
             SlideNotePrefab = slideNotePrefab;
             CurrentNotes = new List<Note>();
+            _laneStatus = new Dictionary<int, LaneStatus>();
+            for (int i = 1; i < 29; i++)
+            {
+                _laneStatus.Add(i, new LaneStatus()
+                {
+                    Note = null,
+                    Status = LaneStatusEnum.Idle
+                });
+            }
 
-            _pGreatTiming = 0.03f;
-            _greatTiming = 0.05f;
+            _pJustTiming = 0.03f;
+            _justTiming = 0.05f;
             _goodTiming = 0.15f;
-            _badTiming = 0.3f;
+            _missTiming = 0.3f;
         }
         public void AddNote(MusicScoreNote musicScoreNote)
         {
@@ -123,6 +148,11 @@ namespace NotNostalgia
                     break;
             }
         }
+        public void RemoveNote(Note note)
+        {
+            CurrentNotes.Remove(note);
+            note.GameObject.SetActive(false);
+        }
         public void Hantei(Dictionary<int, bool> lastFrame, Dictionary<int, bool> currentFrame, float currentTime)
         {
             for (int i = 1; i < 29; i++)
@@ -130,18 +160,47 @@ namespace NotNostalgia
                 if ((currentFrame[i] == true) && (lastFrame[i] == false))
                 {
                     //keypress
-                    GameObject nearestNote;
+                    if (_laneStatus[i].Status != LaneStatusEnum.Idle)
+                        throw new Exception("keypress not idle exception");
+
+                    Note nearestNote = null;
                     foreach (var note in CurrentNotes)
                     {
-                        if (!((note.MinIndex <= i) && (note.MaxIndex >= i)))
-                            continue;
-                        else
+                        if ((note.MinIndex <= i) && (note.MaxIndex >= i))
                         {
                             //in region
-                            if (Math.Abs(note.StartTime - currentTime) <= _badTiming)
+                            if (getHantei(note.StartTime, currentTime) != HanteiEnum.InActive)
                             {
-                                aaa
+                                //in timing
+                                if (nearestNote == null)
+                                    nearestNote = note;
+                                else if (nearestNote.StartTime > note.StartTime)
+                                    nearestNote = note;
                             }
+                        }
+                    }
+                    if (nearestNote == null)
+                        continue;
+
+                    //hantei nearest(active)note
+                    var hantei = getHantei(nearestNote.StartTime, currentTime);
+
+                    if (hantei == HanteiEnum.Miss)
+                    {
+                        RemoveNote(nearestNote);
+                    }
+                    else
+                    {
+                        if (nearestNote.NoteType == NoteTypeEnum.NormalNote)
+                        {
+                            float deltanotetime = nearestNote.StartTime - currentTime;
+                            for (int j = 0; j < nearestNote.SubNotes.Count; j++)
+                            {
+                                nearestNote.SubNotes[j].EndTimingMsec = nearestNote.SubNotes[j].EndTimingMsec - (int)Math.Round(deltanotetime * 1000.0);
+                                nearestNote.SubNotes[j].StartTimingMsec = nearestNote.SubNotes[j].StartTimingMsec - (int)Math.Round(deltanotetime * 1000.0);
+                                _pss.QueuedSubNotes.Add(nearestNote.SubNotes[j]);
+                            }
+                            RemoveNote(nearestNote);
                         }
                     }
                 }
@@ -158,23 +217,25 @@ namespace NotNostalgia
         public GameObject GameObject { get; set; }
         //is lnbody or slideconnector
         public GameObject LnBodyGameObject { get; set; }
+        //in sec
         public float StartTime { get; set; }
         public float EndTime { get; set; }
         public int MinIndex { get; set; }
         public int MaxIndex { get; set; }
+        //in msec
         public List<MusicScoreSubNote> SubNotes { get; set; }
 
-        public HanteiEnum HanteiStart(float currentTime)
-        {
-            if (Math.Abs(StartTime - currentTime) < 0.03)
-                return HanteiEnum.PJust;
-            else if (Math.Abs(StartTime - currentTime) < 0.05)
-                return HanteiEnum.Just;
-            else if (Math.Abs(StartTime - currentTime) < 0.07)
-                return HanteiEnum.Good;
-            else
-                return HanteiEnum.Miss;
-        }
+        //public HanteiEnum HanteiStart(float currentTime)
+        //{
+        //    if (Math.Abs(StartTime - currentTime) < 0.03)
+        //        return HanteiEnum.PJust;
+        //    else if (Math.Abs(StartTime - currentTime) < 0.05)
+        //        return HanteiEnum.Just;
+        //    else if (Math.Abs(StartTime - currentTime) < 0.07)
+        //        return HanteiEnum.Good;
+        //    else
+        //        return HanteiEnum.Miss;
+        //}
         //public HanteiEnum HanteiEnd(float currentTime)
         //{
         //    if (Math.Abs(EndTime - currentTime) < 0.03)
@@ -198,7 +259,8 @@ namespace NotNostalgia
         Just,
         Good,
         Near,
-        Miss
+        Miss,
+        InActive
     }
     public enum NoteTypeEnum
     {
@@ -207,6 +269,20 @@ namespace NotNostalgia
         DoriruNote,
         SlideNote
     }
+    public enum LaneStatusEnum
+    {
+        Idle,
+        InLong,
+        InDoriru
+    }
+    public class LaneStatus
+    {
+        public LaneStatusEnum Status { get; set; }
+        //in what note
+        public Note Note { get; set; }
+    }
+
+
     /*
      * public NoteTypeEnum NoteType
         {

@@ -626,6 +626,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NotePrefab: {fileID: 1556727087489644, guid: f8acfff9f49387f4f9b6c876a09bf24e, type: 2}
+  SlideNotePrefab: {fileID: 1556727087489644, guid: 8c9d99d4c72c42f4e8ee4ab02609cb73,
+    type: 2}
   LongNoteBodyPrefab: {fileID: 1597783859253114, guid: dc5c098450ab151408a089827a452ea4,
     type: 2}
   DoriruNoteBodyPrefab: {fileID: 1597783859253114, guid: 1bcbaca65a30a0b4b9bba834a810bd67,

@@ -22,6 +22,7 @@ public class PlaySceneScript : MonoBehaviour
 
     private MusicScore _musicScore;
     private List<MusicScoreSubNote> _hiddenSubNotes;
+    public List<MusicScoreSubNote> QueuedSubNotes;
     private float _backtrackStartTime;
     private Dictionary<string, AudioClip> _audioClipDict;
     private bool _gameStarted;
@@ -42,7 +43,7 @@ public class PlaySceneScript : MonoBehaviour
     void LoadMusicScore(string path)
     {
         XmlSerializer serializer = new XmlSerializer(typeof(MusicScore));
-        StreamReader xmlreader = new StreamReader(Path.Combine(path, "m_t0017_sumidagawa_02extreme.xml"));
+        StreamReader xmlreader = new StreamReader(Path.Combine(path, "m_t0017_sumidagawa_00normal.xml"));
 
         var musicscore = serializer.Deserialize(xmlreader) as MusicScore;
 
@@ -82,8 +83,8 @@ public class PlaySceneScript : MonoBehaviour
         //end load sounds
 
 
-        //var hiddennote = musicscore.NoteData.Where(q => q.Hand == 2).ToList();
-        var hiddennote = musicscore.NoteData;
+        var hiddennote = musicscore.NoteData.Where(q => q.Hand == 2).ToList();
+        //var hiddennote = musicscore.NoteData;
 
         _hiddenSubNotes = new List<MusicScoreSubNote>();
 
@@ -119,7 +120,7 @@ public class PlaySceneScript : MonoBehaviour
         _audioSourceBg.Play();
     }
 
-    void PlaySubNote(MusicScoreSubNote subNote, bool isProtected = false)
+    public void PlaySubNote(MusicScoreSubNote subNote, bool isProtected = false)
     {
 
         string str = _musicScore.TrackInfo.First(q => q.Index == subNote.TrackIndex).Name;
@@ -163,15 +164,16 @@ public class PlaySceneScript : MonoBehaviour
         _debug_samplecount = 0;
         _debug_sourcesused = 0;
         _debug_audioSourceMaxOutCount = 0;
+
         _audioSources = new List<AudioSourceInfo>();
-        _currentNotesManager = new CurrentNotesManager(NotePrefab, LongNoteBodyPrefab, DoriruNoteBodyPrefab, SlideNotePrefab);
+        _currentNotesManager = new CurrentNotesManager(this, NotePrefab, LongNoteBodyPrefab, DoriruNoteBodyPrefab, SlideNotePrefab);
         _lastFrameKeyStatus = new Dictionary<int, bool>();
         for (int i = 1; i < 29; i++)
         {
             _lastFrameKeyStatus.Add(i, false);
         }
         _currentFrameKeyStatus = new Dictionary<int, bool>();
-
+        QueuedSubNotes = new List<MusicScoreSubNote>();
 
         //begin create audiosources
         GameObject asourcepre = Instantiate(AudioSourcePrefab);
@@ -213,13 +215,28 @@ public class PlaySceneScript : MonoBehaviour
 
 
             //Play bg keyoto (hand=2)
-            while (_hiddenSubNotes.First().StartTimingMsec / 1000.0 < currenttime)
+            //if (_hiddenSubNotes.Count != 0)
+            //{
+            //    while (_hiddenSubNotes.First().StartTimingMsec / 1000.0 < currenttime)
+            //    {
+            //        PlaySubNote(_hiddenSubNotes.First());
+            //        _hiddenSubNotes.Remove(_hiddenSubNotes.First());
+            //    }
+            //}
+            //End play bg
+
+            //Play Queued
+            if (QueuedSubNotes.Count != 0)
             {
-                PlaySubNote(_hiddenSubNotes.First());
-                _hiddenSubNotes.Remove(_hiddenSubNotes.First());
+                QueuedSubNotes = QueuedSubNotes.OrderBy(q => q.StartTimingMsec).ToList();
+                while (QueuedSubNotes.First().StartTimingMsec / 1000.0 < currenttime)
+                {
+                    PlaySubNote(QueuedSubNotes.First());
+                    QueuedSubNotes.Remove(QueuedSubNotes.First());
+                }
             }
 
-            //End play bg
+            //End Play Queued
 
             //start generate note
             while (_musicScore.NoteData[0].StartTimingMsec / 1000.0 < currenttime + 1f)
@@ -234,10 +251,10 @@ public class PlaySceneScript : MonoBehaviour
 
 
             //start keydetect
-            _currentFrameKeyStatus.Clear();
+            _currentFrameKeyStatus=new Dictionary<int, bool>();
             for (int i = 1; i < 29; i++)
             {
-                _lastFrameKeyStatus.Add(i, false);
+                _currentFrameKeyStatus.Add(i, false);
             }
             foreach (var touch in Input.touches)
             {
@@ -267,7 +284,7 @@ public class PlaySceneScript : MonoBehaviour
             _currentNotesManager.Hantei(_lastFrameKeyStatus, _currentFrameKeyStatus, currenttime);
 
             //end hantei
-
+            _lastFrameKeyStatus = _currentFrameKeyStatus;
 
             DebugText.text += $"\n{currenttime.ToString()}";
             DebugText.text += $"\nFPS:{1 / Time.deltaTime}";
