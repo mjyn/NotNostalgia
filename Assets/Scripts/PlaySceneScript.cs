@@ -12,6 +12,7 @@ using System.IO;
 public class PlaySceneScript : MonoBehaviour
 {
     public GameObject NotePrefab;
+    public GameObject SlideNotePrefab;
     public GameObject LongNoteBodyPrefab;
     public GameObject DoriruNoteBodyPrefab;
     public GameObject AudioSourcePrefab;
@@ -30,6 +31,8 @@ public class PlaySceneScript : MonoBehaviour
 
     private CurrentNotesManager _currentNotesManager;
 
+    private Dictionary<int, bool> _lastFrameKeyStatus;
+    private Dictionary<int, bool> _currentFrameKeyStatus;
 
     private int _debug_samplecount;
     private int _debug_sourcesused;
@@ -161,7 +164,14 @@ public class PlaySceneScript : MonoBehaviour
         _debug_sourcesused = 0;
         _debug_audioSourceMaxOutCount = 0;
         _audioSources = new List<AudioSourceInfo>();
-        _currentNotesManager = new CurrentNotesManager(NotePrefab, LongNoteBodyPrefab, DoriruNoteBodyPrefab);
+        _currentNotesManager = new CurrentNotesManager(NotePrefab, LongNoteBodyPrefab, DoriruNoteBodyPrefab, SlideNotePrefab);
+        _lastFrameKeyStatus = new Dictionary<int, bool>();
+        for (int i = 1; i < 29; i++)
+        {
+            _lastFrameKeyStatus.Add(i, false);
+        }
+        _currentFrameKeyStatus = new Dictionary<int, bool>();
+
 
         //begin create audiosources
         GameObject asourcepre = Instantiate(AudioSourcePrefab);
@@ -222,6 +232,13 @@ public class PlaySceneScript : MonoBehaviour
 
             //end generate note
 
+
+            //start keydetect
+            _currentFrameKeyStatus.Clear();
+            for (int i = 1; i < 29; i++)
+            {
+                _lastFrameKeyStatus.Add(i, false);
+            }
             foreach (var touch in Input.touches)
             {
                 Ray ray = Camera.main.ScreenPointToRay(touch.position);
@@ -237,13 +254,20 @@ public class PlaySceneScript : MonoBehaviour
                             if (hit.transform.name == "Panel" + i.ToString())
                             {
                                 DebugText.text += $"Panel{i.ToString()}hit";
-                                
+                                _currentFrameKeyStatus[i] = true;
                             }
                         }
                     }
                 }
                 //DebugText.text += (touch.position.x + " " + touch.position.y + "\n");
             }
+            //end keydetect
+
+            //start hantei
+            _currentNotesManager.Hantei(_lastFrameKeyStatus, _currentFrameKeyStatus, currenttime);
+
+            //end hantei
+
 
             DebugText.text += $"\n{currenttime.ToString()}";
             DebugText.text += $"\nFPS:{1 / Time.deltaTime}";

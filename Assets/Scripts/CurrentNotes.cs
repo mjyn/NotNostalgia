@@ -14,13 +14,23 @@ namespace NotNostalgia
         public GameObject NormalNotePrefab;
         public GameObject LongNoteBodyPrefab;
         public GameObject DoriruNoteBodyPrefab;
+        public GameObject SlideNotePrefab;
 
-        public CurrentNotesManager(GameObject normalNotePrefab, GameObject longNoteBodyPrefab, GameObject doriruNoteBodyPrefab)
+
+        private float _badTiming, _goodTiming, _greatTiming, _pGreatTiming;
+
+        public CurrentNotesManager(GameObject normalNotePrefab, GameObject longNoteBodyPrefab, GameObject doriruNoteBodyPrefab, GameObject slideNotePrefab)
         {
             NormalNotePrefab = normalNotePrefab;
             LongNoteBodyPrefab = longNoteBodyPrefab;
             DoriruNoteBodyPrefab = doriruNoteBodyPrefab;
+            SlideNotePrefab = slideNotePrefab;
             CurrentNotes = new List<Note>();
+
+            _pGreatTiming = 0.03f;
+            _greatTiming = 0.05f;
+            _goodTiming = 0.15f;
+            _badTiming = 0.3f;
         }
         public void AddNote(MusicScoreNote musicScoreNote)
         {
@@ -30,7 +40,23 @@ namespace NotNostalgia
                 case 4:
                 case 12:
                     //temp slide
+                    GameObject slide = UnityEngine.Object.Instantiate(SlideNotePrefab);
+                    slide.GetComponent<NoteController>().SetProperties(musicScoreNote.MinKeyIndex, musicScoreNote.MaxKeyIndex);
 
+                    var slidenote = new Note()
+                    {
+                        NoteType = NoteTypeEnum.SlideNote,
+                        StartTime = musicScoreNote.StartTimingMsec / 1000f,
+                        MinIndex = musicScoreNote.MinKeyIndex,
+                        GameObject = slide,
+                        MaxIndex = musicScoreNote.MaxKeyIndex
+                    };
+                    foreach (var subnote in musicScoreNote.SubNoteData)
+                    {
+                        slidenote.SubNotes.Add(subnote);
+                    }
+                    CurrentNotes.Add(slidenote);
+                    break;
                 case 0:
                 case 8:
                     //normal note
@@ -82,7 +108,7 @@ namespace NotNostalgia
                     drrbody.GetComponent<DoriruNoteBodyController>().SetProperties(musicScoreNote.MinKeyIndex, musicScoreNote.MaxKeyIndex, musicScoreNote.GateTimeMsec / 1000f);
                     var dorirunote = new Note()
                     {
-                        NoteType = NoteTypeEnum.LongNote,
+                        NoteType = NoteTypeEnum.DoriruNote,
                         StartTime = musicScoreNote.StartTimingMsec / 1000f,
                         MinIndex = musicScoreNote.MinKeyIndex,
                         MaxIndex = musicScoreNote.MaxKeyIndex,
@@ -97,9 +123,29 @@ namespace NotNostalgia
                     break;
             }
         }
-        public void Hantei()
+        public void Hantei(Dictionary<int, bool> lastFrame, Dictionary<int, bool> currentFrame, float currentTime)
         {
-
+            for (int i = 1; i < 29; i++)
+            {
+                if ((currentFrame[i] == true) && (lastFrame[i] == false))
+                {
+                    //keypress
+                    GameObject nearestNote;
+                    foreach (var note in CurrentNotes)
+                    {
+                        if (!((note.MinIndex <= i) && (note.MaxIndex >= i)))
+                            continue;
+                        else
+                        {
+                            //in region
+                            if (Math.Abs(note.StartTime - currentTime) <= _badTiming)
+                            {
+                                aaa
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     public class Note
@@ -141,6 +187,11 @@ namespace NotNostalgia
         //        return HanteiEnum.Miss;
         //}
     }
+    //public enum ControlEnum
+    //{
+    //    Press,
+    //    Release
+    //}
     public enum HanteiEnum
     {
         PJust,
